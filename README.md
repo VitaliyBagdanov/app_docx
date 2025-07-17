@@ -153,8 +153,6 @@ shared_data/
   ├── template.docx
 requirements.txt
 docker-compose.yml
-Dockerfile
-.env.example
 README.md
 ```
 
