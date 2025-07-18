@@ -24,7 +24,7 @@ class Database:
         await self.connect()
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
-                "SELECT secretary, body FROM transcripts_mfg WHERE id = $1",
+                "SELECT secretary, body FROM mfg_bot WHERE id = $1",
                 id_
             )
             if row:
