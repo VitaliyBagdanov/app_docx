@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
+from .v2.routes import router as v2_router
 from .schemas import DocxRequest, DocxResponse
 from .db import db
 from .docx_handler import generate_filled_docx
@@ -11,6 +12,8 @@ app = FastAPI(
     description="Генерация docx-файлов по шаблону и данным из Postgres.",
     version="1.0"
 )
+
+app.include_router(v2_router, prefix="/v2", tags=["v2"])
 
 @app.on_event("startup")
 async def startup():
