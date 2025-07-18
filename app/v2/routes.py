@@ -1,18 +1,22 @@
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
+from datetime import datetime
 from .db_v2 import db_v2
 from ..docx_handler import generate_filled_docx, extract_tags_from_docx
 from ..config import settings
 from .schemas import DocxV2Request
+from .utils import format_russian_date
 import os
 import tempfile
 
+
 router = APIRouter()
+
 
 @router.post("/generate-docx")
 async def generate_docx_v2(request: DocxV2Request):
     # 1. Определяем путь к шаблону
-    template_path = os.path.join(settings.DOCX_SHARED_DIR, "template.docx")
+    template_path = os.path.join(settings.DOCX_SHARED_DIR, settings.DOCX_TEMPLATE_FILENAME)
     if not os.path.isfile(template_path):
         raise HTTPException(
             status_code=500,
@@ -34,7 +38,26 @@ async def generate_docx_v2(request: DocxV2Request):
     fill_values = db_row.copy()
     fill_values.update(request.values or {})
 
-    # 5. Формируем временный файл
+    # 5. Проверяем наличие таблиц согласно тегов
+    missing_fields = [tag for tag in tags if tag not in fill_values]
+    if missing_fields:
+        raise HTTPException(
+            status_code=400,
+            detail=f"В таблице нет следующих полей: {', '.join(missing_fields)}"
+        )
+    
+    # 6. Перевод даты в русском стиле
+    for key, val in fill_values.items():
+        if isinstance(val, (datetime, )):
+            fill_values[key] = format_russian_date(val)
+        elif isinstance(val, str):
+            try:
+                dt = datetime.fromisoformat(val)
+                fill_values[key] = format_russian_date(dt)
+            except Exception:
+                pass
+
+    # 7. Формируем временный файл
     output_filename = f"v2_{request.id}_output.docx"
     tmp_dir = tempfile.gettempdir()
     output_path = os.path.join(tmp_dir, output_filename)
@@ -44,7 +67,7 @@ async def generate_docx_v2(request: DocxV2Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating docx: {e}")
 
-    # 6. Отдаем файл с мета-информацией в заголовках
+    # 8. Отдаем файл с мета-информацией в заголовках
     headers = {
         "X-Status": "success",
         "X-Filename": output_filename,

@@ -34,7 +34,7 @@ async def generate_docx(request: DocxRequest):
         )
 
     # 2. Проверка наличия шаблона
-    template_path = os.path.join(settings.DOCX_SHARED_DIR, "template.docx")
+    template_path = os.path.join(settings.DOCX_SHARED_DIR, settings.DOCX_TEMPLATE_FILENAME)
     if not os.path.isfile(template_path):
         raise HTTPException(
             status_code=500,
