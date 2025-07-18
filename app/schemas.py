@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 class DocxRequest(BaseModel):
-    id: str = Field(..., example="math-001", min_length=1)
+    id: int = Field(..., example=1)
 
 class DocxResponse(BaseModel):
     status: str = Field(..., example="success")
