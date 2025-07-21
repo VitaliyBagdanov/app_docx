@@ -32,4 +32,4 @@ class DatabaseV2:
                 return dict(row)
             return None
 
-db_v2 = DatabaseV2()ы
+db_v2 = DatabaseV2()
