@@ -6,6 +6,7 @@ from ..docx_handler import generate_filled_docx, extract_tags_from_docx
 from ..config import settings
 from .schemas import DocxV2Request
 from .utils import format_russian_date
+from .logger import logger
 import os
 import tempfile
 
@@ -16,8 +17,10 @@ router = APIRouter()
 @router.post("/generate-docx")
 async def generate_docx_v2(request: DocxV2Request):
     # 1. Определяем путь к шаблону
+    logger.info(f"Start docx generation, doc_id={request.id}")
     template_path = os.path.join(settings.DOCX_SHARED_DIR, settings.DOCX_TEMPLATE_FILENAME)
     if not os.path.isfile(template_path):
+        logger.error(f"Template file not found: {template_path}")
         raise HTTPException(
             status_code=500,
             detail="Template file not found in shared_data"
@@ -29,6 +32,7 @@ async def generate_docx_v2(request: DocxV2Request):
     # 3. Получаем значения этих полей из базы по id
     db_row = await db_v2.fetch_document_dynamic(request.id, tags)
     if not db_row:
+        logger.error(f"Document with id {request.id} not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Document with id {request.id} not found"
@@ -41,6 +45,7 @@ async def generate_docx_v2(request: DocxV2Request):
     # 5. Проверяем наличие таблиц согласно тегов
     missing_fields = [tag for tag in tags if tag not in fill_values]
     if missing_fields:
+        logger.error(f"В таблице нет следующих полей: {', '.join(missing_fields)}")
         raise HTTPException(
             status_code=400,
             detail=f"В таблице нет следующих полей: {', '.join(missing_fields)}"
@@ -64,7 +69,9 @@ async def generate_docx_v2(request: DocxV2Request):
 
     try:
         generate_filled_docx(template_path, output_path, fill_values)
+        logger.info(f"Docx file generated: {output_path}")
     except Exception as e:
+        logger.exception("Error generating docx")
         raise HTTPException(status_code=500, detail=f"Error generating docx: {e}")
 
     # 8. Отдаем файл с мета-информацией в заголовках
