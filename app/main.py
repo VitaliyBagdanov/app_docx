@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, status, Depends
 # from fastapi.responses import JSONResponse
 from .v2.routes import router as v2_router
-from v2.logger import logger
-from v2.db_v2 import db_v2
+from .v2.logger import logger
+from .v2.db_v2 import db_v2
 # from .schemas import DocxRequest, DocxResponse
 # from .db import db
 # from .docx_handler import generate_filled_docx
